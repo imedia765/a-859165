@@ -105,8 +105,10 @@ export const generateMembersPDF = (members: Member[], title: string = 'Members R
       didDrawPage: (data) => {
         // Add page number to each page
         doc.setFontSize(10);
+        // Cast doc.internal to any to access getNumberOfPages
+        const pageNumber = (doc as any).internal.getNumberOfPages();
         doc.text(
-          `Page ${doc.internal.getNumberOfPages()}`,
+          `Page ${pageNumber}`,
           doc.internal.pageSize.width - 30,
           doc.internal.pageSize.height - 10
         );
