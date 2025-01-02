@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { generateMembersPDF } from '@/utils/pdfGenerator';
 import { useToast } from "@/components/ui/use-toast";
+import TotalCount from "@/components/TotalCount";
 
 type MemberCollector = Database['public']['Tables']['members_collectors']['Row'];
 type Member = Database['public']['Tables']['members']['Row'];
@@ -74,6 +75,9 @@ const CollectorsList = () => {
       return collectorsWithCounts;
     },
   });
+
+  // Calculate total members across all collectors
+  const totalMembers = collectors?.reduce((total, collector) => total + (collector.memberCount || 0), 0) || 0;
 
   const handlePrintAll = async () => {
     if (!allMembers) {
@@ -139,6 +143,10 @@ const CollectorsList = () => {
 
   return (
     <div className="space-y-4">
+      <TotalCount 
+        count={totalMembers}
+        label="Total Members"
+      />
       <div className="flex justify-end mb-4">
         <Button 
           onClick={handlePrintAll}
