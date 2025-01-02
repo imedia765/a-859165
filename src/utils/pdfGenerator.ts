@@ -56,7 +56,6 @@ export const generateMembersPDF = (members: Member[], title: string = 'Members R
     doc.text(`Collector: ${collector}`, 14, startY);
     doc.setFontSize(11);
     doc.text(`Members: ${collectorMembers.length}`, 14, startY + 7);
-    doc.text(`Page ${currentPage}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 10);
     
     // Prepare data rows
     const rows = collectorMembers.map(member => ({
@@ -107,7 +106,7 @@ export const generateMembersPDF = (members: Member[], title: string = 'Members R
         // Add page number to each page
         doc.setFontSize(10);
         doc.text(
-          `Page ${doc.internal.getCurrentPageInfo().pageNumber}`,
+          `Page ${doc.internal.getNumberOfPages()}`,
           doc.internal.pageSize.width - 30,
           doc.internal.pageSize.height - 10
         );
