@@ -4,14 +4,15 @@ import { Database } from '@/integrations/supabase/types';
 
 type Member = Database['public']['Tables']['members']['Row'];
 
-export const generateMembersPDF = (members: Member[], title: string = 'All Members Report') => {
+export const generateMembersPDF = (members: Member[], title: string = 'Members Report') => {
   const doc = new jsPDF();
   
-  // Add title
-  doc.setFontSize(16);
+  // Add title and date
+  doc.setFontSize(18);
   doc.text(title, 14, 15);
   doc.setFontSize(11);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 25);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 25);
+  doc.text(`Total Members: ${members.length}`, 14, 32);
 
   // Group members by collector
   const membersByCollector = members.reduce((acc, member) => {
@@ -23,56 +24,85 @@ export const generateMembersPDF = (members: Member[], title: string = 'All Membe
     return acc;
   }, {} as Record<string, Member[]>);
 
-  let startY = 35;
+  let startY = 40;
 
-  // Define the columns for the table
+  // Define table columns
   const columns = [
-    'Member #',
-    'Name',
-    'Email',
-    'Phone',
-    'Address',
-    'Status',
+    { header: 'Member #', dataKey: 'member_number' },
+    { header: 'Name', dataKey: 'full_name' },
+    { header: 'Contact', dataKey: 'contact' },
+    { header: 'Address', dataKey: 'address' },
+    { header: 'Status', dataKey: 'status' },
+    { header: 'Type', dataKey: 'type' }
   ];
 
   // Generate tables for each collector group
   Object.entries(membersByCollector).forEach(([collector, collectorMembers], index) => {
-    // Start new page for each collector (except the first one)
+    // Add new page if there's not enough space
     if (index > 0) {
       doc.addPage();
       startY = 20;
     }
 
-    // Add collector section header with member count
+    // Add collector section header
     doc.setFontSize(14);
-    doc.text(`Collector: ${collector} (${collectorMembers.length} members)`, 14, startY);
-    startY += 10;
+    doc.text(`Collector: ${collector}`, 14, startY);
+    doc.setFontSize(11);
+    doc.text(`Members: ${collectorMembers.length}`, 14, startY + 7);
+    
+    // Prepare data rows
+    const rows = collectorMembers.map(member => ({
+      member_number: member.member_number || 'N/A',
+      full_name: member.full_name || 'N/A',
+      contact: [
+        member.email,
+        member.phone
+      ].filter(Boolean).join('\n') || 'N/A',
+      address: [
+        member.address,
+        member.town,
+        member.postcode
+      ].filter(Boolean).join(', ') || 'N/A',
+      status: member.status || 'N/A',
+      type: member.membership_type || 'Standard'
+    }));
 
-    // Transform the data into rows
-    const rows = collectorMembers.map(member => [
-      member.member_number,
-      member.full_name,
-      member.email || 'N/A',
-      member.phone || 'N/A',
-      `${member.address || ''} ${member.town || ''} ${member.postcode || ''}`.trim() || 'N/A',
-      member.status || 'N/A',
-    ]);
-
-    // Generate the table for this collector's members
+    // Generate table
     autoTable(doc, {
-      head: [columns],
-      body: rows,
-      startY: startY,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [137, 137, 222] }, // Using dashboard accent1 color
-      alternateRowStyles: { fillColor: [245, 245, 245] },
+      startY: startY + 15,
+      head: [columns.map(col => col.header)],
+      body: rows.map(row => columns.map(col => row[col.dataKey as keyof typeof row])),
+      styles: { 
+        fontSize: 8,
+        cellPadding: 2,
+        overflow: 'linebreak',
+        cellWidth: 'wrap'
+      },
+      columnStyles: {
+        member_number: { cellWidth: 25 },
+        full_name: { cellWidth: 40 },
+        contact: { cellWidth: 40 },
+        address: { cellWidth: 50 },
+        status: { cellWidth: 20 },
+        type: { cellWidth: 25 }
+      },
+      headStyles: { 
+        fillColor: [137, 137, 222],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: { 
+        fillColor: [245, 245, 245] 
+      },
+      margin: { top: 15 }
     });
 
-    // Update startY for next section, adding extra space
+    // Update startY for next section
     const finalY = (doc as any).lastAutoTable.finalY;
     startY = finalY + 15;
   });
 
-  // Save the PDF
-  doc.save(`members-report-${new Date().toISOString().split('T')[0]}.pdf`);
+  // Save the PDF with a formatted date in the filename
+  const date = new Date().toISOString().split('T')[0];
+  doc.save(`members-report-${date}.pdf`);
 };
