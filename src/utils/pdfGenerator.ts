@@ -5,7 +5,7 @@ import { Database } from '@/integrations/supabase/types';
 type Member = Database['public']['Tables']['members']['Row'];
 
 export const generateMembersPDF = (members: Member[], title: string = 'Members Report') => {
-  const doc = new jsPDF();
+  const doc = new jsPDF('landscape'); // Switch to landscape for more space
   console.log('Generating PDF for', members.length, 'members');
   
   // Add title and date
@@ -30,14 +30,14 @@ export const generateMembersPDF = (members: Member[], title: string = 'Members R
   let startY = 40;
   let currentPage = 1;
 
-  // Define table columns
+  // Define table columns with optimized widths for landscape mode
   const columns = [
-    { header: 'Member #', dataKey: 'member_number' },
-    { header: 'Name', dataKey: 'full_name' },
-    { header: 'Contact', dataKey: 'contact' },
-    { header: 'Address', dataKey: 'address' },
-    { header: 'Status', dataKey: 'status' },
-    { header: 'Type', dataKey: 'type' }
+    { header: '#', dataKey: 'member_number', width: 15 },
+    { header: 'Name', dataKey: 'full_name', width: 40 },
+    { header: 'Contact', dataKey: 'contact', width: 40 },
+    { header: 'Address', dataKey: 'address', width: 60 },
+    { header: 'Status', dataKey: 'status', width: 20 },
+    { header: 'Type', dataKey: 'type', width: 25 }
   ];
 
   // Generate tables for each collector group
@@ -47,7 +47,6 @@ export const generateMembersPDF = (members: Member[], title: string = 'Members R
     // Always start a new page for each collector except the first one
     if (index > 0) {
       doc.addPage();
-      currentPage++;
       startY = 20;
     }
 
@@ -57,7 +56,7 @@ export const generateMembersPDF = (members: Member[], title: string = 'Members R
     doc.setFontSize(11);
     doc.text(`Members: ${collectorMembers.length}`, 14, startY + 7);
     
-    // Prepare data rows
+    // Prepare data rows with optimized data formatting
     const rows = collectorMembers.map(member => ({
       member_number: member.member_number || 'N/A',
       full_name: member.full_name || 'N/A',
@@ -74,45 +73,54 @@ export const generateMembersPDF = (members: Member[], title: string = 'Members R
       type: member.membership_type || 'Standard'
     }));
 
-    // Generate table with automatic page breaks
+    // Generate table with automatic page breaks and optimized settings
     autoTable(doc, {
       startY: startY + 15,
       head: [columns.map(col => col.header)],
       body: rows.map(row => columns.map(col => row[col.dataKey as keyof typeof row])),
-      styles: { 
-        fontSize: 8,
-        cellPadding: 2,
-        overflow: 'linebreak',
-        cellWidth: 'wrap'
-      },
-      columnStyles: {
-        member_number: { cellWidth: 20 },
-        full_name: { cellWidth: 35 },
-        contact: { cellWidth: 35 },
-        address: { cellWidth: 45 },
-        status: { cellWidth: 20 },
-        type: { cellWidth: 25 }
-      },
-      headStyles: { 
-        fillColor: [137, 137, 222],
-        textColor: 255,
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: { 
-        fillColor: [245, 245, 245] 
-      },
-      margin: { top: 15 },
       didDrawPage: (data) => {
         // Add page number to each page
         doc.setFontSize(10);
-        // Cast doc.internal to any to access getNumberOfPages
         const pageNumber = (doc as any).internal.getNumberOfPages();
         doc.text(
           `Page ${pageNumber}`,
           doc.internal.pageSize.width - 30,
           doc.internal.pageSize.height - 10
         );
-      }
+      },
+      styles: { 
+        fontSize: 8,
+        cellPadding: 1.5,
+        overflow: 'linebreak',
+        halign: 'left'
+      },
+      columnStyles: {
+        member_number: { cellWidth: columns[0].width },
+        full_name: { cellWidth: columns[1].width },
+        contact: { cellWidth: columns[2].width },
+        address: { cellWidth: columns[3].width },
+        status: { cellWidth: columns[4].width },
+        type: { cellWidth: columns[5].width }
+      },
+      headStyles: { 
+        fillColor: [137, 137, 222],
+        textColor: 255,
+        fontStyle: 'bold',
+        halign: 'left'
+      },
+      alternateRowStyles: { 
+        fillColor: [245, 245, 245] 
+      },
+      margin: { 
+        top: 15,
+        right: 15,
+        bottom: 15,
+        left: 15
+      },
+      tableWidth: 'auto',
+      showHead: 'everyPage',
+      pageBreak: 'auto',
+      rowPageBreak: 'auto'
     });
 
     // Update startY for next section
