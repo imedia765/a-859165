@@ -50,7 +50,7 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
                 <ContactInfo memberProfile={memberProfile} />
                 <AddressDetails memberProfile={memberProfile} />
                 
-                {userRole === 'collector' && (
+                {(userRole === 'collector' || userRole === 'admin') && (
                   <Button
                     onClick={() => setShowEditDialog(true)}
                     className="w-full bg-dashboard-accent2 hover:bg-dashboard-accent2/80 text-white transition-colors"
