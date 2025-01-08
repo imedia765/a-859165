@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { format } from 'date-fns';
+import { format, addDays, isAfter, isBefore, differenceInDays } from 'date-fns';
 import { AlertOctagon, Check, Clock } from "lucide-react";
 
 interface PaymentCardProps {
@@ -36,6 +36,38 @@ const PaymentCard = ({
     }
   };
 
+  const getPaymentStatusInfo = (dueDate?: string) => {
+    if (!dueDate) return { color: 'text-blue-400', message: 'Payment due: January 1st, 2025' };
+    
+    const dueDateObj = new Date(dueDate);
+    const today = new Date();
+    const twentyEightDaysAfterDue = addDays(dueDateObj, 28);
+    const sevenDaysAfterGracePeriod = addDays(twentyEightDaysAfterDue, 7);
+    
+    if (isBefore(today, dueDateObj)) {
+      return {
+        color: 'text-blue-400',
+        message: `Due: ${formatDate(dueDate)}`,
+        warning: null
+      };
+    } else if (isBefore(today, twentyEightDaysAfterDue)) {
+      return {
+        color: 'text-yellow-400',
+        message: `Payment overdue since ${formatDate(dueDate)}`,
+        warning: null
+      };
+    } else {
+      const daysUntilDeactivation = differenceInDays(sevenDaysAfterGracePeriod, today);
+      return {
+        color: 'text-rose-500',
+        message: `Payment critically overdue`,
+        warning: daysUntilDeactivation > 0 
+          ? `Account will be deactivated in ${daysUntilDeactivation} days`
+          : 'Account deactivation pending'
+      };
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -66,6 +98,8 @@ const PaymentCard = ({
     }
   };
 
+  const yearlyPaymentInfo = getPaymentStatusInfo(annualPaymentDueDate || '2025-01-01');
+
   return (
     <Card className="dashboard-card">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -75,9 +109,14 @@ const PaymentCard = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-2xl font-bold text-white">£40</p>
-              <p className="text-lg font-bold text-dashboard-warning">
-                Due: {formatDate(annualPaymentDueDate)}
+              <p className={`text-lg font-bold ${yearlyPaymentInfo.color}`}>
+                {yearlyPaymentInfo.message}
               </p>
+              {yearlyPaymentInfo.warning && (
+                <p className="text-sm text-rose-500 font-medium mt-2">
+                  ⚠️ {yearlyPaymentInfo.warning}
+                </p>
+              )}
               {lastAnnualPaymentDate && (
                 <div className="mt-2">
                   <p className="text-xs text-dashboard-muted">
@@ -99,20 +138,6 @@ const PaymentCard = ({
                 {getStatusIcon(annualPaymentStatus)}
               </div>
             </div>
-          </div>
-          <div className="text-sm text-dashboard-text">
-            {annualPaymentStatus === 'completed' 
-              ? 'Payment completed' 
-              : (
-                <div className="space-y-1">
-                  <p>Payment {annualPaymentStatus}</p>
-                  <p className="text-dashboard-muted">
-                    {annualPaymentStatus === 'overdue' 
-                      ? 'Please complete your overdue payment immediately'
-                      : 'Please complete your payment before the due date'}
-                  </p>
-                </div>
-              )}
           </div>
         </div>
 
