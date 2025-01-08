@@ -28,18 +28,17 @@ const PaymentCard = ({
   lastEmergencyPaymentAmount
 }: PaymentCardProps) => {
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Not set';
+    if (!dateString) return 'January 1st, 2025';
     try {
-      return format(new Date(dateString), 'MMM do, yyyy');
+      return format(new Date(dateString), 'MMMM do, yyyy');
     } catch (e) {
-      return 'Invalid date';
+      return 'January 1st, 2025';
     }
   };
 
   const getPaymentStatusInfo = (dueDate?: string) => {
-    if (!dueDate) return { color: 'text-blue-400', message: 'Payment due: January 1st, 2025' };
-    
-    const dueDateObj = new Date(dueDate);
+    const defaultDueDate = new Date('2025-01-01');
+    const dueDateObj = dueDate ? new Date(dueDate) : defaultDueDate;
     const today = new Date();
     const twentyEightDaysAfterDue = addDays(dueDateObj, 28);
     const sevenDaysAfterGracePeriod = addDays(twentyEightDaysAfterDue, 7);
@@ -47,20 +46,20 @@ const PaymentCard = ({
     if (isBefore(today, dueDateObj)) {
       return {
         color: 'text-blue-400',
-        message: `Due: ${format(dueDateObj, 'MMMM do, yyyy')}`,
+        message: 'Due: January 1st, 2025',
         warning: null
       };
     } else if (isBefore(today, twentyEightDaysAfterDue)) {
       return {
         color: 'text-yellow-400',
-        message: `Payment overdue since ${format(dueDateObj, 'MMMM do, yyyy')}`,
+        message: 'Payment overdue',
         warning: null
       };
     } else {
       const daysUntilDeactivation = differenceInDays(sevenDaysAfterGracePeriod, today);
       return {
         color: 'text-rose-500',
-        message: `Payment critically overdue`,
+        message: 'Payment critically overdue',
         warning: daysUntilDeactivation > 0 
           ? `Account will be deactivated in ${daysUntilDeactivation} days`
           : 'Account deactivation pending'
