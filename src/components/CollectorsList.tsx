@@ -1,25 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from '@/integrations/supabase/types';
-import { UserCheck, User, Printer } from 'lucide-react';
+import { UserCheck, Users, CreditCard, Link2, AlertCircle } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { generateMembersPDF } from '@/utils/pdfGenerator';
-import { useToast } from "@/components/ui/use-toast";
-import TotalCount from "@/components/TotalCount";
+import CollectorMembers from "@/components/CollectorMembers";
+import PrintButtons from "@/components/PrintButtons";
+import { usePagination } from '@/hooks/usePagination';
+import PaginationControls from './ui/pagination/PaginationControls';
 
 type MemberCollector = Database['public']['Tables']['members_collectors']['Row'];
 type Member = Database['public']['Tables']['members']['Row'];
 
-const CollectorsList = () => {
-  const { toast } = useToast();
+const ITEMS_PER_PAGE = 10;
 
-  // Fetch all members for the master print functionality
+const CollectorsList = () => {
   const { data: allMembers } = useQuery({
     queryKey: ['all_members'],
     queryFn: async () => {
@@ -48,7 +47,8 @@ const CollectorsList = () => {
           phone,
           active,
           created_at,
-          updated_at
+          updated_at,
+          member_number
         `)
         .order('number', { ascending: true });
       
@@ -57,85 +57,36 @@ const CollectorsList = () => {
         throw collectorsError;
       }
 
-      const collectorsWithCounts = await Promise.all(collectorsData?.map(async (collector) => {
+      if (!collectorsData) return [];
+
+      const collectorsWithCounts = await Promise.all(collectorsData.map(async (collector) => {
         const { count } = await supabase
           .from('members')
           .select('*', { count: 'exact', head: true })
           .eq('collector', collector.name);
-        
-        console.log(`Collector ${collector.name} has ${count} members`);
-        
+
         return {
           ...collector,
           memberCount: count || 0
         };
-      }) || []);
+      }));
 
-      console.log('Collectors with counts:', collectorsWithCounts);
       return collectorsWithCounts;
     },
   });
 
-  // Calculate total members across all collectors
-  const totalMembers = collectors?.reduce((total, collector) => total + (collector.memberCount || 0), 0) || 0;
+  const {
+    currentPage,
+    totalPages,
+    from,
+    to,
+    setCurrentPage,
+  } = usePagination({
+    totalItems: collectors?.length || 0,
+    itemsPerPage: ITEMS_PER_PAGE,
+  });
 
-  const handlePrintAll = async () => {
-    if (!allMembers) {
-      toast({
-        title: "Error",
-        description: "No members data available to print",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      generateMembersPDF(allMembers, 'Complete Members List');
-      toast({
-        title: "Success",
-        description: "PDF report generated successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF report",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePrintCollector = async (collectorName: string) => {
-    try {
-      const { data: collectorMembers, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('collector', collectorName)
-        .order('member_number', { ascending: true });
-
-      if (error) throw error;
-
-      if (!collectorMembers?.length) {
-        toast({
-          title: "Error",
-          description: "No members found for this collector",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      generateMembersPDF(collectorMembers, `Members List - Collector: ${collectorName}`);
-      toast({
-        title: "Success",
-        description: "PDF report generated successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF report",
-        variant: "destructive",
-      });
-    }
-  };
+  const paginatedCollectors = collectors?.slice(from, to + 1) || [];
 
   if (collectorsLoading) return <div className="text-center py-4">Loading collectors...</div>;
   if (collectorsError) return <div className="text-center py-4 text-red-500">Error loading collectors: {collectorsError.message}</div>;
@@ -143,22 +94,12 @@ const CollectorsList = () => {
 
   return (
     <div className="space-y-4">
-      <TotalCount 
-        count={totalMembers}
-        label="Total Members"
-      />
       <div className="flex justify-end mb-4">
-        <Button 
-          onClick={handlePrintAll}
-          className="flex items-center gap-2 bg-dashboard-accent1 hover:bg-dashboard-accent1/80"
-        >
-          <Printer className="w-4 h-4" />
-          Print All Members
-        </Button>
+        <PrintButtons allMembers={allMembers} />
       </div>
 
       <Accordion type="single" collapsible className="space-y-4">
-        {collectors.map((collector) => (          
+        {paginatedCollectors.map((collector) => (          
           <AccordionItem
             key={collector.id}
             value={collector.id}
@@ -183,16 +124,7 @@ const CollectorsList = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePrintCollector(collector.name || '');
-                    }}
-                    className="flex items-center gap-2 bg-dashboard-accent2 hover:bg-dashboard-accent2/80"
-                  >
-                    <Printer className="w-4 h-4" />
-                    Print Members
-                  </Button>
+                  <PrintButtons collectorName={collector.name || ''} />
                   <div className={`px-3 py-1 rounded-full ${
                     collector.active 
                       ? 'bg-green-500/20 text-green-400' 
@@ -215,41 +147,18 @@ const CollectorsList = () => {
           </AccordionItem>
         ))}
       </Accordion>
+
+      {collectors.length > ITEMS_PER_PAGE && (
+        <div className="py-4">
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
     </div>
   );
-};
-
-const CollectorMembers = ({ collectorName }: { collectorName: string }) => {
-  const { data: members, isLoading } = useQuery({
-    queryKey: ['collector_members', collectorName],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('collector', collectorName)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      if (error) throw error;
-      return data as Member[];
-    },
-  });
-
-  if (isLoading) return <div>Loading members...</div>;
-  if (!members?.length) return null;
-
-  return members.map((member) => (
-    <div 
-      key={member.id}
-      className="flex items-center gap-3 p-3 bg-black/20 rounded-lg"
-    >
-      <User className="w-5 h-5 text-gray-400" />
-      <div>
-        <p className="text-sm font-medium text-white">{member.full_name}</p>
-        <p className="text-xs text-gray-400">Member #{member.member_number}</p>
-      </div>
-    </div>
-  ));
 };
 
 export default CollectorsList;

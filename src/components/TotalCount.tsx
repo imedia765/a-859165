@@ -1,20 +1,35 @@
 import { Users } from 'lucide-react';
 
-interface TotalCountProps {
-  count: number;
+interface TotalCountItem {
+  count: number | string;
   label: string;
   icon?: React.ReactNode;
 }
 
-const TotalCount = ({ count, label, icon }: TotalCountProps) => {
+interface TotalCountProps {
+  items?: TotalCountItem[];
+  // Support for legacy props
+  count?: number | string;
+  label?: string;
+  icon?: React.ReactNode;
+}
+
+const TotalCount = ({ items, count, label, icon }: TotalCountProps) => {
+  // If legacy props are provided, convert them to items format
+  const displayItems = items || (count !== undefined ? [{ count, label: label || '', icon }] : []);
+
   return (
-    <div className="glass-card p-4 mb-6 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        {icon}
-        <div>
-          <p className="text-sm text-dashboard-muted">{label}</p>
-          <p className="text-2xl font-semibold">{count}</p>
-        </div>
+    <div className="glass-card p-2 sm:p-3 md:p-4">
+      <div className="flex items-center gap-2 sm:gap-4 md:gap-8">
+        {displayItems.map((item, index) => (
+          <div key={index} className="flex items-center gap-2 sm:gap-3">
+            {item.icon}
+            <div>
+              <p className="text-xs sm:text-sm text-dashboard-muted line-clamp-1">{item.label}</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-semibold text-dashboard-accent1">{item.count}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
