@@ -47,13 +47,13 @@ const PaymentCard = ({
     if (isBefore(today, dueDateObj)) {
       return {
         color: 'text-blue-400',
-        message: `Due: ${formatDate(dueDate)}`,
+        message: `Due: ${format(dueDateObj, 'MMMM do, yyyy')}`,
         warning: null
       };
     } else if (isBefore(today, twentyEightDaysAfterDue)) {
       return {
         color: 'text-yellow-400',
-        message: `Payment overdue since ${formatDate(dueDate)}`,
+        message: `Payment overdue since ${format(dueDateObj, 'MMMM do, yyyy')}`,
         warning: null
       };
     } else {
