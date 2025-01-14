@@ -8,15 +8,22 @@ import {
   BarChart, 
   Settings, 
   FileText, 
-  Laptop, 
-  Code, 
+  Laptop,
+  Code,
   GitBranch,
   Terminal,
   Package,
   FolderTree,
   PlayCircle,
   Bug,
-  FileCode
+  FileCode,
+  UserCog,
+  Wallet,
+  CalendarCheck,
+  ClipboardList,
+  UserPlus,
+  Bell,
+  HelpCircle
 } from "lucide-react";
 
 const UserManual = () => {
@@ -30,13 +37,99 @@ const UserManual = () => {
 
         <div className="prose prose-invert max-w-none">
           <p className="text-dashboard-text">
-            PWA Burton is a comprehensive platform designed for managing various aspects of a membership-based organization. 
-            Built using modern web technologies like React, TypeScript, and Supabase, it follows a component-based architecture 
-            to ensure scalability and maintainability.
+            Welcome to PWA Burton - your comprehensive platform for managing membership, payments, and organizational operations. 
+            This manual provides detailed guidance for all user roles within the system.
           </p>
         </div>
 
         <Accordion type="single" collapsible className="w-full space-y-4">
+          <AccordionItem value="user-instructions" className="border-white/10">
+            <AccordionTrigger className="text-lg font-medium text-dashboard-accent2">
+              <div className="flex items-center gap-2">
+                <UserCog className="h-5 w-5" />
+                Instructions for Users
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="text-dashboard-text space-y-4 pt-4">
+              <Card className="p-4 bg-dashboard-card border-white/10">
+                <h3 className="text-dashboard-accent1 font-medium mb-2">Getting Started</h3>
+                <ul className="space-y-2">
+                  <li>• Login using your member number</li>
+                  <li>• Update your profile information</li>
+                  <li>• View payment history and dues</li>
+                  <li>• Access family member information</li>
+                </ul>
+              </Card>
+              <Card className="p-4 bg-dashboard-card border-white/10">
+                <h3 className="text-dashboard-accent1 font-medium mb-2">Managing Your Account</h3>
+                <ul className="space-y-2">
+                  <li>• View and update personal details</li>
+                  <li>• Change contact information</li>
+                  <li>• Track payment status</li>
+                  <li>• Download payment receipts</li>
+                </ul>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="member-instructions" className="border-white/10">
+            <AccordionTrigger className="text-lg font-medium text-dashboard-accent2">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Member Functions
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="text-dashboard-text space-y-4 pt-4">
+              <Card className="p-4 bg-dashboard-card border-white/10">
+                <h3 className="text-dashboard-accent1 font-medium mb-2">Payment Management</h3>
+                <ul className="space-y-2">
+                  <li>• View yearly payment status</li>
+                  <li>• Track emergency collections</li>
+                  <li>• Make online payments</li>
+                  <li>• View payment history</li>
+                </ul>
+              </Card>
+              <Card className="p-4 bg-dashboard-card border-white/10">
+                <h3 className="text-dashboard-accent1 font-medium mb-2">Family Management</h3>
+                <ul className="space-y-2">
+                  <li>• Add family members</li>
+                  <li>• Update dependent information</li>
+                  <li>• View family member status</li>
+                  <li>• Track dependent benefits</li>
+                </ul>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="collector-instructions" className="border-white/10">
+            <AccordionTrigger className="text-lg font-medium text-dashboard-accent2">
+              <div className="flex items-center gap-2">
+                <Wallet className="h-5 w-5" />
+                Collector Functions
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="text-dashboard-text space-y-4 pt-4">
+              <Card className="p-4 bg-dashboard-card border-white/10">
+                <h3 className="text-dashboard-accent1 font-medium mb-2">Collection Management</h3>
+                <ul className="space-y-2">
+                  <li>• Record new payments</li>
+                  <li>• Track collection progress</li>
+                  <li>• Generate collection reports</li>
+                  <li>• Monitor payment deadlines</li>
+                </ul>
+              </Card>
+              <Card className="p-4 bg-dashboard-card border-white/10">
+                <h3 className="text-dashboard-accent1 font-medium mb-2">Member Oversight</h3>
+                <ul className="space-y-2">
+                  <li>• View assigned members</li>
+                  <li>• Track member payment status</li>
+                  <li>• Update member information</li>
+                  <li>• Generate member reports</li>
+                </ul>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
           <AccordionItem value="features" className="border-white/10">
             <AccordionTrigger className="text-lg font-medium text-dashboard-accent2">
               <div className="flex items-center gap-2">
@@ -150,6 +243,26 @@ const UserManual = () => {
                   </div>
                 ))}
               </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="support" className="border-white/10">
+            <AccordionTrigger className="text-lg font-medium text-dashboard-accent2">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-5 w-5" />
+                Support & Help
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="text-dashboard-text space-y-4 pt-4">
+              <Card className="p-4 bg-dashboard-card border-white/10">
+                <h3 className="text-dashboard-accent1 font-medium mb-2">Getting Help</h3>
+                <ul className="space-y-2">
+                  <li>• Contact your collector for payment-related queries</li>
+                  <li>• Reach out to system administrators for technical issues</li>
+                  <li>• Check announcements for important updates</li>
+                  <li>• Review FAQs for common questions</li>
+                </ul>
+              </Card>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
