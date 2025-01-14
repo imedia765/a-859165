@@ -1,9 +1,15 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { FileDown, Loader2 } from "lucide-react";
+import { FileDown, Loader2, BookOpen, Code, Users, CreditCard, BarChart4, Settings, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from '@tanstack/react-query';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const UserManual = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -26,13 +32,9 @@ const UserManual = () => {
   const handleDownload = async () => {
     try {
       setIsGenerating(true);
-      
       const { data, error } = await supabase.functions.invoke('generate-manual');
-      
       if (error) throw error;
-
       window.open(data.url, '_blank');
-
       toast({
         title: "Success",
         description: "User manual generated successfully",
@@ -61,13 +63,13 @@ const UserManual = () => {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-white">User Manual</h2>
+          <h2 className="text-2xl font-semibold text-white">PWA Burton User Manual</h2>
           {currentManual ? (
             <p className="text-sm text-dashboard-muted">
               Version {currentManual.version} • Last updated: {new Date(currentManual.updated_at).toLocaleDateString()}
             </p>
           ) : (
-            <p className="text-sm text-dashboard-muted">No manual version available</p>
+            <p className="text-sm text-dashboard-muted">Documentation Version 1.0</p>
           )}
         </div>
         <Button
@@ -83,93 +85,169 @@ const UserManual = () => {
           ) : (
             <>
               <FileDown className="w-4 h-4 mr-2" />
-              {currentManual ? 'Download Manual' : 'Generate Manual'}
+              Download Manual
             </>
           )}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-lg p-6">
-          <img 
-            src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b" 
-            alt="Getting Started" 
-            className="w-full h-48 object-cover rounded-md mb-4"
-          />
-          <h3 className="text-lg font-medium text-white mb-4">Getting Started</h3>
-          <div className="space-y-2 text-dashboard-text">
-            <p>• Login Process - Simple member number authentication</p>
-            <p>• Dashboard Overview - Navigate your personalized dashboard</p>
-            <p>• Profile Setup - Complete your member information</p>
-          </div>
-        </div>
-
-        <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-lg p-6">
-          <img 
-            src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d" 
-            alt="Member Features" 
-            className="w-full h-48 object-cover rounded-md mb-4"
-          />
-          <h3 className="text-lg font-medium text-white mb-4">Member Features</h3>
-          <div className="space-y-2 text-dashboard-text">
-            <p>• Profile Management - Update your personal information</p>
-            <p>• Payment History - Track all your contributions</p>
-            <p>• Family Members - Manage your family information</p>
-          </div>
-        </div>
-
-        <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-lg p-6">
-          <img 
-            src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158" 
-            alt="Collector Features" 
-            className="w-full h-48 object-cover rounded-md mb-4"
-          />
-          <h3 className="text-lg font-medium text-white mb-4">Collector Features</h3>
-          <div className="space-y-2 text-dashboard-text">
-            <p>• Member Management - View and manage assigned members</p>
-            <p>• Collection Tracking - Record and monitor payments</p>
-            <p>• Reports Generation - Create detailed collection reports</p>
-          </div>
-        </div>
-
-        <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-lg p-6">
-          <img 
-            src="https://images.unsplash.com/photo-1498050108023-c5249f4df085" 
-            alt="Admin Features" 
-            className="w-full h-48 object-cover rounded-md mb-4"
-          />
-          <h3 className="text-lg font-medium text-white mb-4">Admin Features</h3>
-          <div className="space-y-2 text-dashboard-text">
-            <p>• System Management - Configure system settings</p>
-            <p>• User Administration - Manage roles and permissions</p>
-            <p>• Monitoring Tools - Track system performance</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-dashboard-card border border-dashboard-cardBorder rounded-lg p-6">
-        <h3 className="text-lg font-medium text-white mb-4">Additional Resources</h3>
-        <div className="space-y-4">
-          <div className="flex items-start space-x-3">
-            <div className="bg-dashboard-accent1/10 p-3 rounded-lg">
-              <FileDown className="w-5 h-5 text-dashboard-accent1" />
+      <Accordion type="single" collapsible className="space-y-4">
+        <AccordionItem value="introduction" className="border border-white/10 rounded-lg">
+          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              <span>Introduction</span>
             </div>
-            <div>
-              <h4 className="text-white font-medium">Troubleshooting Guide</h4>
-              <p className="text-dashboard-text text-sm">Common issues and their solutions</p>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 text-dashboard-text">
+            <p className="mb-4">
+              PWA Burton is a comprehensive platform designed for managing various aspects of a membership-based organization. 
+              It provides tools for managing members, collectors, payments, and system administration.
+            </p>
+            <p>
+              Built using modern web technologies like React, TypeScript, and Supabase, PWA Burton follows a 
+              component-based architecture to ensure scalability and maintainability.
+            </p>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="features" className="border border-white/10 rounded-lg">
+          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <Code className="w-5 h-5" />
+              <span>Key Features</span>
             </div>
-          </div>
-          <div className="flex items-start space-x-3">
-            <div className="bg-dashboard-accent1/10 p-3 rounded-lg">
-              <FileDown className="w-5 h-5 text-dashboard-accent1" />
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <ul className="space-y-4 text-dashboard-text">
+              <li className="flex items-start gap-2">
+                <Users className="w-5 h-5 mt-1 text-dashboard-accent2" />
+                <div>
+                  <h4 className="font-medium text-white">User Authentication</h4>
+                  <p>Securely manages user access with a role-based authentication system.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <CreditCard className="w-5 h-5 mt-1 text-dashboard-accent2" />
+                <div>
+                  <h4 className="font-medium text-white">Payment Processing</h4>
+                  <p>Streamlines payment recording, tracking, and reporting.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <BarChart4 className="w-5 h-5 mt-1 text-dashboard-accent2" />
+                <div>
+                  <h4 className="font-medium text-white">Financial Reporting</h4>
+                  <p>Offers robust tools for analyzing financial data and generating summaries.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <Settings className="w-5 h-5 mt-1 text-dashboard-accent2" />
+                <div>
+                  <h4 className="font-medium text-white">System Administration</h4>
+                  <p>Comprehensive tools for managing system configurations and user roles.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <FileText className="w-5 h-5 mt-1 text-dashboard-accent2" />
+                <div>
+                  <h4 className="font-medium text-white">Audit Logging</h4>
+                  <p>Maintains detailed records of system events and user actions.</p>
+                </div>
+              </li>
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="getting-started" className="border border-white/10 rounded-lg">
+          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              <span>Getting Started</span>
             </div>
-            <div>
-              <h4 className="text-white font-medium">Quick Start Guide</h4>
-              <p className="text-dashboard-text text-sm">Step-by-step guide for new users</p>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 text-dashboard-text">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-white mb-2">Login Process</h4>
+                <ol className="list-decimal list-inside space-y-2">
+                  <li>Navigate to the login page</li>
+                  <li>Enter your member number</li>
+                  <li>Click "Login" to proceed</li>
+                  <li>First-time users will need to verify their identity</li>
+                </ol>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-2">Dashboard Overview</h4>
+                <p>
+                  The dashboard provides quick access to key information and metrics. Use the sidebar 
+                  navigation to access different sections of the application.
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="member-management" className="border border-white/10 rounded-lg">
+          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              <span>Member Management</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 text-dashboard-text">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-white mb-2">Managing Members</h4>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>View and search member profiles</li>
+                  <li>Update member information</li>
+                  <li>Track payment history</li>
+                  <li>Manage family members</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-2">Collector Management</h4>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Assign members to collectors</li>
+                  <li>Monitor collector performance</li>
+                  <li>Generate collection reports</li>
+                </ul>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="payments" className="border border-white/10 rounded-lg">
+          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              <span>Payments & Financial Management</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 text-dashboard-text">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-white mb-2">Payment Processing</h4>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Record new payments</li>
+                  <li>Track payment status</li>
+                  <li>Generate payment receipts</li>
+                  <li>View payment history</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-2">Financial Reporting</h4>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>View financial summaries</li>
+                  <li>Generate collection reports</li>
+                  <li>Track collector performance</li>
+                </ul>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 };
