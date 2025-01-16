@@ -79,16 +79,20 @@ const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps)
         if (memberError) throw memberError;
 
         // Separate query for user roles
-        const rolesData = await supabase
+        const { data: userRolesData, error: userRolesError } = await supabase
           .from('user_roles')
           .select('role, created_at')
           .eq('user_id', memberDetails?.[0]?.auth_user_id || '');
 
+        if (userRolesError) throw userRolesError;
+
         // Separate query for collector status
-        const collectorData = await supabase
+        const { data: collectorData, error: collectorError } = await supabase
           .from('members_collectors')
           .select('active')
           .eq('member_number', memberDetails?.[0]?.member_number || '');
+
+        if (collectorError) throw collectorError;
 
         // Format debug logs
         const debugLogs = [
@@ -96,10 +100,10 @@ const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps)
           JSON.stringify(memberDetails, null, 2),
           '-------------------',
           'User Roles:',
-          JSON.stringify(rolesData.data, null, 2),
+          JSON.stringify(userRolesData, null, 2),
           '-------------------',
           'Collector Status:',
-          JSON.stringify(collectorData.data, null, 2)
+          JSON.stringify(collectorData, null, 2)
         ];
 
         // Update debug console
@@ -140,23 +144,23 @@ const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps)
           rolesQuery = rolesQuery.eq('role', selectedRole);
         }
 
-        const { data: rolesData, error: userRolesError } = await rolesQuery;
+        const { data: rolesList, error: userRolesListError } = await rolesQuery;
 
-        if (userRolesError) {
-          console.error('Error fetching user roles:', userRolesError);
-          throw userRolesError;
+        if (userRolesListError) {
+          console.error('Error fetching user roles:', userRolesListError);
+          throw userRolesListError;
         }
 
         const filteredMembers = membersData.filter(member => {
           if (selectedRole === 'all') return true;
-          return rolesData.some(r => 
+          return rolesList.some(r => 
             r.user_id === member.auth_user_id && 
             r.role === selectedRole
           );
         });
 
         return filteredMembers.map(member => {
-          const userRoles = rolesData
+          const userRoles = rolesList
             .filter(r => r.user_id === member.auth_user_id)
             .map(r => ({ role: r.role }));
 
