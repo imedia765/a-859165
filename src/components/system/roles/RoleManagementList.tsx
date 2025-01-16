@@ -61,54 +61,6 @@ const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps)
           throw new Error('Unauthorized: Admin access required');
         }
 
-        // Query for member details
-        const { data: memberDetails, error: memberError } = await supabase
-          .from('members')
-          .select(`
-            id,
-            auth_user_id,
-            full_name,
-            member_number,
-            email,
-            status,
-            verified
-          `)
-          .eq(searchTerm ? 'member_number' : 'id', searchTerm || '*')
-          .limit(1);
-
-        if (memberError) throw memberError;
-
-        // Separate query for user roles
-        const { data: userRolesData, error: userRolesError } = await supabase
-          .from('user_roles')
-          .select('role, created_at')
-          .eq('user_id', memberDetails?.[0]?.auth_user_id || '');
-
-        if (userRolesError) throw userRolesError;
-
-        // Separate query for collector status
-        const { data: collectorData, error: collectorError } = await supabase
-          .from('members_collectors')
-          .select('active')
-          .eq('member_number', memberDetails?.[0]?.member_number || '');
-
-        if (collectorError) throw collectorError;
-
-        // Format debug logs
-        const debugLogs = [
-          `Query Results for member ${searchTerm || 'all'}:`,
-          JSON.stringify(memberDetails, null, 2),
-          '-------------------',
-          'User Roles:',
-          JSON.stringify(userRolesData, null, 2),
-          '-------------------',
-          'Collector Status:',
-          JSON.stringify(collectorData, null, 2)
-        ];
-
-        // Update debug console
-        onDebugLog?.(debugLogs);
-
         let membersQuery = supabase
           .from('members')
           .select(`
@@ -144,11 +96,11 @@ const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps)
           rolesQuery = rolesQuery.eq('role', selectedRole);
         }
 
-        const { data: rolesList, error: userRolesListError } = await rolesQuery;
+        const { data: rolesList, error: userRolesError } = await rolesQuery;
 
-        if (userRolesListError) {
-          console.error('Error fetching user roles:', userRolesListError);
-          throw userRolesListError;
+        if (userRolesError) {
+          console.error('Error fetching user roles:', userRolesError);
+          throw userRolesError;
         }
 
         const filteredMembers = membersData.filter(member => {
@@ -245,6 +197,3 @@ const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps)
       </ScrollArea>
     </div>
   );
-};
-
-export default RoleManagementList;
