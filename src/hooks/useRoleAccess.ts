@@ -97,13 +97,13 @@ export const useRoleAccess = () => {
           let userRole: UserRole = null;
           if (roles.includes('admin')) {
             userRole = 'admin';
-            console.log('User has admin role');
+            console.log('User has admin role (highest priority)');
           } else if (roles.includes('collector')) {
             userRole = 'collector';
-            console.log('User has collector role');
+            console.log('User has collector role (medium priority)');
           } else if (roles.includes('member')) {
             userRole = 'member';
-            console.log('User has member role');
+            console.log('User has member role (lowest priority)');
           }
           
           console.log('Final role determination:', { userRole, userRoles });
@@ -166,18 +166,23 @@ export const useRoleAccess = () => {
     
     if (!roleData?.userRoles) return false;
 
+    // Check roles in priority order
     if (hasRole('admin')) {
+      console.log('User has admin role, granting full access');
       return ['dashboard', 'users', 'collectors', 'audit', 'system', 'financials'].includes(tab);
     }
     
     if (hasRole('collector')) {
+      console.log('User has collector role, granting collector access');
       return ['dashboard', 'users'].includes(tab);
     }
     
     if (hasRole('member')) {
+      console.log('User has member role, granting basic access');
       return tab === 'dashboard';
     }
 
+    console.log('No matching role found, denying access');
     return false;
   };
 
