@@ -64,7 +64,6 @@ export const useRoleAccess = () => {
       }
 
       console.log('Fetching roles for user:', sessionData.user.id);
-      console.log('User email:', sessionData.user.email);
       
       try {
         console.log('Querying user_roles table...');
@@ -78,63 +77,25 @@ export const useRoleAccess = () => {
           throw roleError;
         }
 
-        console.log('Raw role data from database:', roleData);
-        console.log('SQL query details:', {
-          table: 'user_roles',
-          user_id: sessionData.user.id,
-          resultCount: roleData?.length || 0
-        });
-
         if (roleData && roleData.length > 0) {
           console.log('Found roles in database:', roleData);
           const roles = roleData.map(r => r.role as BaseUserRole);
           console.log('Mapped roles:', roles);
           
-          // Store all roles
           const userRoles = roles as UserRoles;
           
-          // Determine highest priority role
           let userRole: UserRole = null;
           if (roles.includes('admin')) {
             userRole = 'admin';
-            console.log('User has admin role (highest priority)');
           } else if (roles.includes('collector')) {
             userRole = 'collector';
-            console.log('User has collector role (medium priority)');
           } else if (roles.includes('member')) {
             userRole = 'member';
-            console.log('User has member role (lowest priority)');
           }
           
-          console.log('Final role determination:', { userRole, userRoles });
           return { userRole, userRoles };
         }
 
-        // Fallback checks for collector and member status
-        if (sessionData.user.user_metadata.member_number) {
-          console.log('Checking collector status...');
-          const { data: collectorData } = await supabase
-            .from('members_collectors')
-            .select('name')
-            .eq('member_number', sessionData.user.user_metadata.member_number)
-            .maybeSingle();
-
-          if (collectorData) {
-            console.log('User is a collector');
-            return { 
-              userRole: 'collector' as UserRole, 
-              userRoles: ['collector'] as UserRoles 
-            };
-          }
-
-          console.log('User is a regular member');
-          return { 
-            userRole: 'member' as UserRole, 
-            userRoles: ['member'] as UserRoles 
-          };
-        }
-
-        console.log('No role found, defaulting to member');
         return { 
           userRole: 'member' as UserRole, 
           userRoles: ['member'] as UserRoles 
@@ -146,7 +107,7 @@ export const useRoleAccess = () => {
     },
     enabled: !!sessionData?.user?.id,
     staleTime: ROLE_STALE_TIME,
-    cacheTime: ROLE_STALE_TIME,
+    gcTime: ROLE_STALE_TIME,
     retry: MAX_RETRIES,
     retryDelay: RETRY_DELAY,
     refetchOnWindowFocus: true,
@@ -166,7 +127,6 @@ export const useRoleAccess = () => {
     
     if (!roleData?.userRoles) return false;
 
-    // Check roles in priority order
     if (hasRole('admin')) {
       console.log('User has admin role, granting full access');
       return ['dashboard', 'users', 'collectors', 'audit', 'system', 'financials'].includes(tab);
