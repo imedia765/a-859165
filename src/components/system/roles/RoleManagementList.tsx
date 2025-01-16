@@ -23,9 +23,14 @@ interface UserData {
   user_roles: UserRoleData[];
 }
 
+interface RoleManagementListProps {
+  searchTerm: string;
+  onDebugLog?: (logs: string[]) => void;
+}
+
 const ITEMS_PER_PAGE = 10;
 
-const RoleManagementList = ({ searchTerm }: { searchTerm: string }) => {
+const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps) => {
   const [selectedRole, setSelectedRole] = useState<UserRole | 'all'>('all');
   const [page, setPage] = useState(0);
   const queryClient = useQueryClient();
@@ -40,6 +45,7 @@ const RoleManagementList = ({ searchTerm }: { searchTerm: string }) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
+        // Debug logging for user roles query
         const { data: currentUserRoles, error: rolesError } = await supabase
           .from('user_roles')
           .select('role')
@@ -54,6 +60,42 @@ const RoleManagementList = ({ searchTerm }: { searchTerm: string }) => {
         if (!isAdmin) {
           throw new Error('Unauthorized: Admin access required');
         }
+
+        // Query for member details with roles
+        const { data: memberDetails, error: memberError } = await supabase
+          .from('members')
+          .select(`
+            id,
+            auth_user_id,
+            full_name,
+            member_number,
+            email,
+            status,
+            verified,
+            user_roles (
+              role,
+              created_at
+            ),
+            members_collectors (
+              active
+            )
+          `)
+          .eq(searchTerm ? 'member_number' : 'id', searchTerm || '*')
+          .limit(1);
+
+        if (memberError) throw memberError;
+
+        // Format debug logs
+        const debugLogs = [
+          `Query Results for member ${searchTerm || 'all'}:`,
+          JSON.stringify(memberDetails, null, 2),
+          '-------------------',
+          'User Roles:',
+          JSON.stringify(currentUserRoles, null, 2)
+        ];
+
+        // Update debug console
+        onDebugLog?.(debugLogs);
 
         let membersQuery = supabase
           .from('members')
