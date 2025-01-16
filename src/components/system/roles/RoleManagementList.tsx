@@ -61,7 +61,7 @@ const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps)
           throw new Error('Unauthorized: Admin access required');
         }
 
-        // Query for member details with roles
+        // Query for member details
         const { data: memberDetails, error: memberError } = await supabase
           .from('members')
           .select(`
@@ -71,19 +71,24 @@ const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps)
             member_number,
             email,
             status,
-            verified,
-            user_roles (
-              role,
-              created_at
-            ),
-            members_collectors (
-              active
-            )
+            verified
           `)
           .eq(searchTerm ? 'member_number' : 'id', searchTerm || '*')
           .limit(1);
 
         if (memberError) throw memberError;
+
+        // Separate query for user roles
+        const rolesData = await supabase
+          .from('user_roles')
+          .select('role, created_at')
+          .eq('user_id', memberDetails?.[0]?.auth_user_id || '');
+
+        // Separate query for collector status
+        const collectorData = await supabase
+          .from('members_collectors')
+          .select('active')
+          .eq('member_number', memberDetails?.[0]?.member_number || '');
 
         // Format debug logs
         const debugLogs = [
@@ -91,7 +96,10 @@ const RoleManagementList = ({ searchTerm, onDebugLog }: RoleManagementListProps)
           JSON.stringify(memberDetails, null, 2),
           '-------------------',
           'User Roles:',
-          JSON.stringify(currentUserRoles, null, 2)
+          JSON.stringify(rolesData.data, null, 2),
+          '-------------------',
+          'Collector Status:',
+          JSON.stringify(collectorData.data, null, 2)
         ];
 
         // Update debug console
