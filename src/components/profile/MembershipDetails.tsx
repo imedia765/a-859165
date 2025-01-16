@@ -295,33 +295,35 @@ Please return this form to your bank.`;
                 </span>
                 <span className="text-dashboard-accent1 text-xl font-semibold">£{lastPayment.amount}</span>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
                     <span className="text-dashboard-muted">Reference:</span>
-                    <span className="ml-2 text-white font-medium">{lastPayment.payment_number || 'N/A'}</span>
+                    <span className="text-white font-medium">{lastPayment.payment_number || 'N/A'}</span>
                   </div>
-                  <div>
+                  <div className="flex items-center justify-between">
                     <span className="text-dashboard-muted">Date:</span>
-                    <span className="ml-2 text-white">
+                    <span className="text-white">
                       {lastPayment.created_at ? format(new Date(lastPayment.created_at), 'dd MMM yyyy') : 'N/A'}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-dashboard-muted">Method:</span>
-                  <div className="flex items-center gap-2 text-white">
-                    {lastPayment.payment_method === 'cash' ? (
-                      <>
-                        <Banknote className="w-4 h-4 text-dashboard-accent3" />
-                        <span>Cash</span>
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="w-4 h-4 text-dashboard-accent2" />
-                        <span>Bank Transfer</span>
-                      </>
-                    )}
+                <div className="flex flex-col justify-center">
+                  <div className="flex items-center gap-3">
+                    <span className="text-dashboard-muted">Method:</span>
+                    <div className="flex items-center gap-2 text-white">
+                      {lastPayment.payment_method === 'cash' ? (
+                        <>
+                          <Banknote className="w-4 h-4 text-dashboard-accent3" />
+                          <span>Cash</span>
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-4 h-4 text-dashboard-accent2" />
+                          <span>Bank Transfer</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
