@@ -26,7 +26,12 @@ export const CollectorRolesList = () => {
 
   const handleRoleChange = async (userId: string, role: AppRole, action: 'add' | 'remove') => {
     try {
-      console.log('[CollectorRolesList] Handling role change:', { userId, role, action });
+      console.log('[CollectorRolesList] Starting role change:', { 
+        userId, 
+        role, 
+        action,
+        timestamp: new Date().toISOString() 
+      });
       
       if (action === 'add') {
         console.log('[CollectorRolesList] Adding role:', { userId, role });
@@ -34,7 +39,7 @@ export const CollectorRolesList = () => {
           .from('user_roles')
           .insert([{ 
             user_id: userId, 
-            role: role
+            role: role as AppRole
           }]);
         if (insertError) {
           console.error('[CollectorRolesList] Insert error:', insertError);
@@ -53,7 +58,7 @@ export const CollectorRolesList = () => {
         }
       }
       
-      console.log('[CollectorRolesList] Role change successful');
+      console.log('[CollectorRolesList] Role change successful, invalidating queries');
       
       // Invalidate multiple related queries
       await Promise.all([
@@ -66,6 +71,8 @@ export const CollectorRolesList = () => {
         title: "Role updated",
         description: `Successfully ${action}ed ${role} role`,
       });
+
+      console.log('[CollectorRolesList] Role change completed successfully');
     } catch (error) {
       console.error('[CollectorRolesList] Role update error:', error);
       toast({
@@ -78,8 +85,14 @@ export const CollectorRolesList = () => {
 
   const handleSync = async (userId: string) => {
     try {
-      console.log('[CollectorRolesList] Starting sync for user:', userId);
+      console.log('[CollectorRolesList] Starting sync for user:', {
+        userId,
+        timestamp: new Date().toISOString()
+      });
+      
       await syncRoles([userId]);
+      
+      console.log('[CollectorRolesList] Sync completed, invalidating queries');
       
       // Invalidate multiple related queries
       await Promise.all([
@@ -94,7 +107,7 @@ export const CollectorRolesList = () => {
         description: "Role synchronization process has completed",
       });
       
-      console.log('[CollectorRolesList] Sync completed for user:', userId);
+      console.log('[CollectorRolesList] Sync completed successfully for user:', userId);
     } catch (error) {
       console.error('[CollectorRolesList] Sync error:', error);
       toast({
