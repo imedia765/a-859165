@@ -32,17 +32,12 @@ export const useRoleAccess = () => {
     setUserRoles,
     setIsLoading,
     setError
-  } = useRoleStore() as RoleState & {
-    setUserRole: (role: UserRole | null) => void;
-    setUserRoles: (roles: UserRole[] | null) => void;
-    setIsLoading: (loading: boolean) => void;
-    setError: (error: Error | null) => void;
-  };
+  } = useRoleStore();
 
-  useQuery({
+  const { data: fetchedRoles, refetch } = useQuery({
     queryKey: ['userRoles'],
     queryFn: async () => {
-      console.log('[RoleAccess] Fetching user roles - start');
+      console.log('[RoleAccess] Starting role fetch process...');
       setIsLoading(true);
       
       try {
@@ -55,28 +50,60 @@ export const useRoleAccess = () => {
           return null;
         }
 
-        console.log('[RoleAccess] Fetching roles for user:', session.user.id);
-        
-        const { data: roles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id);
-
-        if (rolesError) {
-          console.error('[RoleAccess] Error fetching roles:', rolesError);
-          toast({
-            title: "Error fetching roles",
-            description: "There was a problem loading your access permissions. Please refresh the page.",
-            variant: "destructive",
-          });
-          throw rolesError;
-        }
-
-        const userRoles = roles?.map(r => r.role as UserRole) || ['member'];
-        console.log('[RoleAccess] Fetched roles:', {
-          roles: userRoles,
+        console.log('[RoleAccess] Fetching roles for user:', {
+          userId: session.user.id,
+          email: session.user.email,
           timestamp: new Date().toISOString()
         });
+
+        // First check if user is a collector
+        console.log('[RoleAccess] Checking collector status...');
+        const { data: memberData, error: memberError } = await supabase
+          .from('members')
+          .select('member_number')
+          .eq('auth_user_id', session.user.id)
+          .maybeSingle();
+
+        if (memberError && memberError.code !== 'PGRST116') {
+          console.error('[RoleAccess] Error checking member status:', memberError);
+          throw memberError;
+        }
+
+        // Fetch all roles with retry logic and no caching
+        let retryCount = 0;
+        const maxRetries = 3;
+        let roleData = null;
+        let lastError = null;
+
+        while (retryCount < maxRetries) {
+          try {
+            const { data, error: rolesError } = await supabase
+              .from('user_roles')
+              .select('*')
+              .eq('user_id', session.user.id);
+
+            if (rolesError) throw rolesError;
+            roleData = data;
+            break;
+          } catch (err) {
+            lastError = err;
+            retryCount++;
+            console.log(`[RoleAccess] Retry ${retryCount} of ${maxRetries} for role fetch`);
+            if (retryCount < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+            }
+          }
+        }
+
+        if (!roleData && lastError) {
+          console.error('[RoleAccess] All role fetch retries failed:', lastError);
+          throw lastError;
+        }
+
+        console.log('[RoleAccess] Raw role data from database:', roleData);
+
+        const userRoles = roleData?.map(r => r.role as UserRole) || ['member'];
+        console.log('[RoleAccess] Mapped roles:', userRoles);
 
         // Set primary role (admin > collector > member)
         const primaryRole = userRoles.includes('admin' as UserRole) 
@@ -85,13 +112,24 @@ export const useRoleAccess = () => {
             ? 'collector' as UserRole
             : 'member' as UserRole;
 
-        console.log('[RoleAccess] Setting primary role:', primaryRole);
+        console.log('[RoleAccess] Final role determination:', {
+          userRole: primaryRole,
+          userRoles,
+          timestamp: new Date().toISOString()
+        });
         
         setUserRoles(userRoles);
         setUserRole(primaryRole);
         return userRoles;
       } catch (error: any) {
         console.error('[RoleAccess] Role fetch error:', error);
+        
+        toast({
+          title: "Error fetching roles",
+          description: "There was a problem loading your permissions. Please try again.",
+          variant: "destructive",
+        });
+
         setError(error);
         throw error;
       } finally {
@@ -100,9 +138,11 @@ export const useRoleAccess = () => {
     },
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
+    gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 5000 // Poll every 5 seconds
   });
 
   const hasRole = (role: UserRole): boolean => {
@@ -156,6 +196,7 @@ export const useRoleAccess = () => {
     permissions,
     hasRole,
     hasAnyRole,
-    canAccessTab
+    canAccessTab,
+    refetchRoles: refetch
   };
 };

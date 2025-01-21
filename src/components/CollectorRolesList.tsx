@@ -24,7 +24,7 @@ export const CollectorRolesList = () => {
   const { syncRoles } = useRoleSync();
   const { data: collectors = [], isLoading, error } = useCollectorsData();
 
-  const handleRoleChange = async (userId: string, role: AppRole, action: 'add' | 'remove') => {
+  const handleRoleChange = async (userId: string, role: UserRole, action: 'add' | 'remove') => {
     try {
       console.log('[CollectorRolesList] Starting role change:', { 
         userId, 
@@ -39,7 +39,7 @@ export const CollectorRolesList = () => {
           .from('user_roles')
           .insert([{ 
             user_id: userId, 
-            role: role as AppRole
+            role 
           }]);
         if (insertError) {
           console.error('[CollectorRolesList] Insert error:', insertError);
@@ -60,7 +60,6 @@ export const CollectorRolesList = () => {
       
       console.log('[CollectorRolesList] Role change successful, invalidating queries');
       
-      // Invalidate multiple related queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['collectors-roles'] }),
         queryClient.invalidateQueries({ queryKey: ['userRoles'] }),
@@ -94,7 +93,6 @@ export const CollectorRolesList = () => {
       
       console.log('[CollectorRolesList] Sync completed, invalidating queries');
       
-      // Invalidate multiple related queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['collectors-roles'] }),
         queryClient.invalidateQueries({ queryKey: ['userRoles'] }),
