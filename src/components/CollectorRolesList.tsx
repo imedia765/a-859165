@@ -23,22 +23,26 @@ export const CollectorRolesList = () => {
 
   const handleRoleChange = async (userId: string, role: UserRole, action: 'add' | 'remove') => {
     try {
+      console.log('[CollectorRolesList] Handling role change:', { userId, role, action });
+      
       if (action === 'add') {
-        const { error } = await supabase
+        const { error: insertError } = await supabase
           .from('user_roles')
           .insert([{ 
             user_id: userId, 
-            role
+            role: role as UserRole // Ensure proper type casting
           }]);
-        if (error) throw error;
+        if (insertError) throw insertError;
       } else {
-        const { error } = await supabase
+        const { error: deleteError } = await supabase
           .from('user_roles')
           .delete()
           .eq('user_id', userId)
           .eq('role', role);
-        if (error) throw error;
+        if (deleteError) throw deleteError;
       }
+      
+      console.log('[CollectorRolesList] Role change successful');
       
       // Invalidate multiple related queries
       await Promise.all([
@@ -52,7 +56,7 @@ export const CollectorRolesList = () => {
         description: `Successfully ${action}ed ${role} role`,
       });
     } catch (error) {
-      console.error('Role update error:', error);
+      console.error('[CollectorRolesList] Role update error:', error);
       toast({
         title: "Error updating role",
         description: error instanceof Error ? error.message : "An error occurred",
@@ -63,7 +67,7 @@ export const CollectorRolesList = () => {
 
   const handleSync = async (userId: string) => {
     try {
-      console.log('Starting sync for user:', userId);
+      console.log('[CollectorRolesList] Starting sync for user:', userId);
       await syncRoles([userId]);
       
       // Invalidate multiple related queries
@@ -79,9 +83,9 @@ export const CollectorRolesList = () => {
         description: "Role synchronization process has completed",
       });
       
-      console.log('Sync completed for user:', userId);
+      console.log('[CollectorRolesList] Sync completed for user:', userId);
     } catch (error) {
-      console.error('Sync error:', error);
+      console.error('[CollectorRolesList] Sync error:', error);
       toast({
         title: "Sync failed",
         description: error instanceof Error ? error.message : "An error occurred during sync",
@@ -91,10 +95,12 @@ export const CollectorRolesList = () => {
   };
 
   if (error || roleError) {
+    const errorMessage = error?.message || roleError?.message || "Error loading collectors";
+    console.error('[CollectorRolesList] Error:', errorMessage);
     return (
       <div className="flex items-center justify-center p-4 text-dashboard-error">
         <AlertCircle className="w-4 h-4 mr-2" />
-        <span>Error loading collectors</span>
+        <span>{errorMessage}</span>
       </div>
     );
   }
