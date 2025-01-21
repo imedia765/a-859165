@@ -29,20 +29,28 @@ export const CollectorRolesList = () => {
       console.log('[CollectorRolesList] Handling role change:', { userId, role, action });
       
       if (action === 'add') {
+        console.log('[CollectorRolesList] Adding role:', { userId, role });
         const { error: insertError } = await supabase
           .from('user_roles')
           .insert([{ 
             user_id: userId, 
             role: role
           }]);
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('[CollectorRolesList] Insert error:', insertError);
+          throw insertError;
+        }
       } else {
+        console.log('[CollectorRolesList] Removing role:', { userId, role });
         const { error: deleteError } = await supabase
           .from('user_roles')
           .delete()
           .eq('user_id', userId)
           .eq('role', role);
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error('[CollectorRolesList] Delete error:', deleteError);
+          throw deleteError;
+        }
       }
       
       console.log('[CollectorRolesList] Role change successful');
