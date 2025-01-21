@@ -12,6 +12,9 @@ import { useCollectorsData } from '@/hooks/useCollectorsData';
 import { CollectorRolesHeader } from './collectors/roles/CollectorRolesHeader';
 import { CollectorRolesRow } from './collectors/roles/CollectorRolesRow';
 import { UserRole, CollectorInfo } from "@/types/collector-roles";
+import { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 export const CollectorRolesList = () => {
   const { toast } = useToast();
@@ -21,7 +24,7 @@ export const CollectorRolesList = () => {
   const { syncRoles } = useRoleSync();
   const { data: collectors = [], isLoading, error } = useCollectorsData();
 
-  const handleRoleChange = async (userId: string, role: UserRole, action: 'add' | 'remove') => {
+  const handleRoleChange = async (userId: string, role: AppRole, action: 'add' | 'remove') => {
     try {
       console.log('[CollectorRolesList] Handling role change:', { userId, role, action });
       
@@ -30,7 +33,7 @@ export const CollectorRolesList = () => {
           .from('user_roles')
           .insert([{ 
             user_id: userId, 
-            role: role as UserRole // Ensure proper type casting
+            role: role
           }]);
         if (insertError) throw insertError;
       } else {
