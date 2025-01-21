@@ -39,24 +39,23 @@ export const useRoleAccess = () => {
     setError: (error: Error | null) => void;
   };
 
-  // Query to fetch user roles with improved error handling and logging
   useQuery({
     queryKey: ['userRoles'],
     queryFn: async () => {
-      console.log('Fetching user roles - start');
+      console.log('[RoleAccess] Fetching user roles - start');
       setIsLoading(true);
       
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session?.user) {
-          console.log('No authenticated session found');
+          console.log('[RoleAccess] No authenticated session found');
           setUserRoles(null);
           setUserRole(null);
           return null;
         }
 
-        console.log('Fetching roles for user:', session.user.id);
+        console.log('[RoleAccess] Fetching roles for user:', session.user.id);
         
         const { data: roles, error: rolesError } = await supabase
           .from('user_roles')
@@ -64,7 +63,7 @@ export const useRoleAccess = () => {
           .eq('user_id', session.user.id);
 
         if (rolesError) {
-          console.error('Error fetching roles:', rolesError);
+          console.error('[RoleAccess] Error fetching roles:', rolesError);
           toast({
             title: "Error fetching roles",
             description: "There was a problem loading your access permissions. Please refresh the page.",
@@ -74,7 +73,10 @@ export const useRoleAccess = () => {
         }
 
         const userRoles = roles?.map(r => r.role as UserRole) || ['member'];
-        console.log('Fetched roles:', userRoles);
+        console.log('[RoleAccess] Fetched roles:', {
+          roles: userRoles,
+          timestamp: new Date().toISOString()
+        });
 
         // Set primary role (admin > collector > member)
         const primaryRole = userRoles.includes('admin' as UserRole) 
@@ -83,26 +85,33 @@ export const useRoleAccess = () => {
             ? 'collector' as UserRole
             : 'member' as UserRole;
 
+        console.log('[RoleAccess] Setting primary role:', primaryRole);
+        
         setUserRoles(userRoles);
         setUserRole(primaryRole);
         return userRoles;
       } catch (error: any) {
-        console.error('Role fetch error:', error);
+        console.error('[RoleAccess] Role fetch error:', error);
         setError(error);
         throw error;
       } finally {
         setIsLoading(false);
       }
     },
-    retry: 3, // Retry failed requests 3 times
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 1000 * 60 * 5,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 
   const hasRole = (role: UserRole): boolean => {
-    console.log('Checking role:', { role, userRole, userRoles });
+    console.log('[RoleAccess] Checking role:', { 
+      role, 
+      userRole, 
+      userRoles,
+      timestamp: new Date().toISOString()
+    });
     if (!userRoles) return false;
     return userRoles.includes(role);
   };
@@ -114,18 +123,29 @@ export const useRoleAccess = () => {
   const canAccessTab = (tab: string): boolean => {
     if (!userRoles) return false;
 
-    switch (tab) {
-      case 'dashboard':
-        return true;
-      case 'users':
-        return hasRole('admin') || hasRole('collector');
-      case 'financials':
-        return hasRole('admin') || hasRole('collector');
-      case 'system':
-        return hasRole('admin');
-      default:
-        return false;
-    }
+    const result = (() => {
+      switch (tab) {
+        case 'dashboard':
+          return true;
+        case 'users':
+          return hasRole('admin') || hasRole('collector');
+        case 'financials':
+          return hasRole('admin') || hasRole('collector');
+        case 'system':
+          return hasRole('admin');
+        default:
+          return false;
+      }
+    })();
+
+    console.log('[RoleAccess] Tab access check:', {
+      tab,
+      hasAccess: result,
+      userRoles,
+      timestamp: new Date().toISOString()
+    });
+
+    return result;
   };
 
   return {
